@@ -5,9 +5,9 @@ const db = app.database();
 const collection = db.collection("properties");
 
 const DESTINATIONS = {
-  ferry: "22.28955,114.15143",
-  sheungWan: "22.28663,114.15186",
-  admiralty: "22.27962,114.16545"
+  ferry: { latitude: 22.28955, longitude: 114.15143 },
+  sheungWan: { latitude: 22.28663, longitude: 114.15186 },
+  admiralty: { latitude: 22.27962, longitude: 114.16545 }
 };
 
 function familyId(code) {
@@ -75,29 +75,38 @@ async function research(query) {
   return { properties, sources: evidence.map(({ title, url, site, date }) => ({ title, url, site, date })) };
 }
 
-async function mapGet(path, params) {
-  const key = process.env.TENCENT_MAP_KEY;
-  if (!key) throw new Error("云函数尚未配置 TENCENT_MAP_KEY");
-  const url = new URL(`https://apis.map.qq.com${path}`);
-  Object.entries({ ...params, key }).forEach(([k, v]) => url.searchParams.set(k, v));
-  const response = await fetch(url);
+async function googleRoute(address, destination, travelMode) {
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) throw new Error("云函数尚未配置 GOOGLE_MAPS_API_KEY");
+  const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "routes.duration" },
+    body: JSON.stringify({
+      origin: { address: `香港 ${address.trim()}` },
+      destination: { location: { latLng: destination } },
+      travelMode,
+      languageCode: "zh-HK",
+      regionCode: "HK",
+      units: "METRIC"
+    })
+  });
   const data = await response.json();
-  if (!response.ok || data.status !== 0) throw new Error(data.message || "腾讯地图请求失败");
-  return data.result;
+  if (!response.ok) throw new Error(`Google Maps 路线请求失败（HTTP ${response.status}）：${data?.error?.message || "未知错误"}`);
+  const duration = data.routes?.[0]?.duration;
+  if (!duration) throw new Error("Google Maps 暂时无法为该地址提供路线，请补充更完整的香港地址");
+  return Math.ceil(Number.parseFloat(String(duration).replace(/s$/, "")) / 60);
 }
 
 async function commute(address) {
   if (!address || address.trim().length < 4) throw new Error("请先填写完整房源地址");
-  const geo = await mapGet("/ws/geocoder/v1/", { address: `香港 ${address.trim()}`, region: "香港" });
-  const from = `${geo.location.lat},${geo.location.lng}`;
-  const walking = await mapGet("/ws/distance/v1/matrix", { mode: "walking", from, to: `${DESTINATIONS.ferry};${DESTINATIONS.sheungWan}` });
+  const [ferry, sheungWan] = await Promise.all([
+    googleRoute(address, DESTINATIONS.ferry, "WALK"),
+    googleRoute(address, DESTINATIONS.sheungWan, "WALK")
+  ]);
   let admiralty = 0;
-  try {
-    const transit = await mapGet("/ws/direction/v1/transit/", { from, to: DESTINATIONS.admiralty, policy: "LEAST_TIME" });
-    admiralty = Math.ceil(Number(transit.routes?.[0]?.duration || 0));
-  } catch { /* 部分腾讯地图账号未开通公交路线，保留为0 */ }
-  const elements = walking.rows?.[0]?.elements || [];
-  return { ferry: Math.ceil((elements[0]?.duration || 0) / 60), sheungWan: Math.ceil((elements[1]?.duration || 0) / 60), admiralty, location: geo.location, calculatedAt: new Date().toISOString() };
+  try { admiralty = await googleRoute(address, DESTINATIONS.admiralty, "TRANSIT"); }
+  catch (error) { console.warn("Google Maps transit route unavailable", error.message); }
+  return { ferry, sheungWan, admiralty, provider: "Google Maps", calculatedAt: new Date().toISOString() };
 }
 
 exports.main = async (event) => {

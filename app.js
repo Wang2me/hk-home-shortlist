@@ -273,9 +273,9 @@ $("calculateCommuteBtn").addEventListener("click", async () => {
   if (!cloudMode || !window.HomeCloud.getFamilyCode()) return alert("请先连接家庭共享清单，才能调用腾讯地图计算路线。");
   const address = $("addressInput").value.trim(); if (!address) return alert("请先填写房源完整地址。");
   const button = $("calculateCommuteBtn"); button.disabled = true; button.textContent = "正在计算…";
-  try { const data = await cloudCall("commute", { address }); $("ferryInput").value=data.ferry||""; $("sheungWanInput").value=data.sheungWan||""; $("admiraltyInput").value=data.admiralty||""; toast("真实路线时间已填入"); }
+  try { const data = await cloudCall("commute", { address }); $("ferryInput").value=data.ferry||""; $("sheungWanInput").value=data.sheungWan||""; $("admiraltyInput").value=data.admiralty||""; toast("Google Maps 路线时间已填入"); }
   catch (error) { alert(`路线计算失败：${error.message}`); }
-  finally { button.disabled=false; button.textContent="自动计算路线"; }
+  finally { button.disabled=false; button.textContent="用 Google Maps 计算"; }
 });
 
 $("researchBtn").addEventListener("click", () => {
