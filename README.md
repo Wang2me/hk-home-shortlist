@@ -13,7 +13,7 @@
 ## 第一步：创建 CloudBase 环境
 
 1. 登录[腾讯云 CloudBase 控制台](https://tcb.cloud.tencent.com/)，创建一个云开发环境，建议选择上海地域和文档型数据库。
-2. 在文档数据库中新建集合 `properties`，权限设为**仅管理员可读写**。网页不会直接访问数据库，全部操作经云函数完成。
+2. 当前环境为 PostgreSQL 模式：进入“PostgreSQL → Document 插件 → 文档编辑器”，启用 `pgdoc` 插件，然后在文档编辑器中新建集合 `properties`，基础权限设为**无权限**。网页不会直接访问数据库，全部操作经云函数完成。不要用 `public.properties` 普通 PostgreSQL 表代替；Document 插件的数据实际存放在 `pgdoc_data` schema。
 3. 在“API Key 配置”中创建 Web 端 **Publishable Key**。
 4. 在“身份认证 → 登录方式”开启“用户名密码登录”。
 5. 在“身份认证 → 用户管理”手动创建每位家庭成员的注册用户。关闭公开注册，只保留管理员手动创建的账号。

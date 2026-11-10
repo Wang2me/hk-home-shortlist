@@ -97,7 +97,7 @@
     if (!result.ok) {
       const detail = String(result.error || "云端操作失败");
       if (/RESOURCE_NOT_FOUND|reource is not found|resource is not found/i.test(detail) && ["list", "upsert", "delete", "bulk_import", "clear"].includes(action)) {
-        throw new Error("当前 CloudBase 环境尚未初始化文档数据库，或缺少 properties 集合。请在同一环境的文档数据库中创建 properties 集合。");
+        throw new Error("当前 PostgreSQL 环境尚未启用 Document 插件，或 Document 编辑器中缺少 properties 集合。public.properties 普通表不能替代该集合。请在 PostgreSQL → Document 插件 → 文档编辑器中启用插件并创建 properties。");
       }
       throw new Error(detail);
     }
