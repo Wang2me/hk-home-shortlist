@@ -65,12 +65,12 @@ https://github.com/Wang2me/hk-home-shortlist
 | 项目根目录 | `.` 或 `/` |
 | Node.js | 18 或更高 |
 | 安装命令 | 留空 |
-| 构建命令 | 如果界面有独立构建步骤，填写 `npm run build` |
+| 构建命令 | `npm run build` |
 | 构建产物目录 | `dist` |
 | 部署路径 | `/` |
-| 自定义部署命令 | `npm run deploy:cloudbase` |
+| 自定义部署命令 | 留空 |
 
-开启“代码更新后自动部署”。如果使用“自定义部署命令”，只填写 `npm run deploy:cloudbase`，它会先生成 `dist` 再上传，避免 `Path does not exist: dist`。不要直接填写 `tcb hosting deploy ./dist ...`，因为那会跳过构建步骤。
+开启“代码更新后自动部署”。CloudBase会先运行 `npm run build` 生成 `dist`，然后由平台使用内部身份上传构建产物。不要在构建命令或自定义部署命令中调用 `tcb hosting deploy`；构建容器没有CLI登录身份，会报 `No valid identity information`。
 
 仓库构建脚本只会把 `index.html`、CSS、前端 JavaScript 和公开配置复制到 `dist`，不会发布 README 或云函数源码。
 
