@@ -67,6 +67,11 @@ function fitCore(p) { return p.type !== "唐楼" && p.elevator && p.price >= 300
 function ready(p) { return ["可直接入住", "新装修", "保养良好"].includes(p.condition); }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c])); }
 function safeUrl(value = "") { try { const u = new URL(value); return ["http:", "https:"].includes(u.protocol) ? u.href : ""; } catch { return ""; } }
+function normalizeUrl(value = "") {
+  const text = String(value).trim();
+  if (!text) return "";
+  return safeUrl(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+}
 function newId() { return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 
 function warnings(p) {
@@ -136,6 +141,7 @@ function bindCardActions() {
 
 function openProperty(id = "") {
   $("propertyForm").reset();
+  $("propertyFormError").hidden = true;
   $("propertyId").value = id;
   $("dialogTitle").textContent = id ? "编辑房源" : "新增房源";
   $("deleteBtn").hidden = !id;
@@ -151,7 +157,22 @@ function openProperty(id = "") {
 
 $("propertyForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!event.currentTarget.reportValidity()) return;
+  const fail = (input, message) => {
+    $("propertyFormError").textContent = message; $("propertyFormError").hidden = false;
+    input.focus(); input.scrollIntoView({ behavior:"smooth", block:"center" });
+    return false;
+  };
+  if (!$("nameInput").value.trim()) return fail($("nameInput"), "请填写房源名称。");
+  if ($("priceInput").validity.badInput || number($("priceInput").value) <= 0) return fail($("priceInput"), "请填写大于 0 的叫价，单位是万港币，例如 420 或 428.8。");
+  if ($("sizeInput").validity.badInput || number($("sizeInput").value) <= 0) return fail($("sizeInput"), "请填写大于 0 的实用面积，单位是平方呎。");
+  const optionalNumbers = [["ageInput","楼龄"],["ferryInput","到港澳码头时间"],["sheungWanInput","到上环站时间"],["admiraltyInput","到金钟时间"]];
+  for (const [id, label] of optionalNumbers) {
+    const input = $(id); if (input.value && (input.validity.badInput || number(input.value) < 0)) return fail(input, `${label}必须是大于或等于 0 的数字。`);
+  }
+  const normalizedLink = normalizeUrl($("linkInput").value);
+  if ($("linkInput").value.trim() && !normalizedLink) return fail($("linkInput"), "房源链接格式不正确，请填写完整网址，例如 https://example.com/listing。");
+  $("linkInput").value = normalizedLink;
+  $("propertyFormError").hidden = true;
   const id = $("propertyId").value || newId();
   const old = properties.find((p) => p.id === id);
   const p = { id, name: $("nameInput").value.trim(), address:$("addressInput").value.trim(), area: $("areaInput").value, price:number($("priceInput").value), size:number($("sizeInput").value), layout:$("layoutInput").value.trim(), age:number($("ageInput").value), condition:$("conditionInput").value, type:$("typeInput").value, elevator:$("elevatorInput").checked, favorite:$("favoriteInput").checked, ferry:number($("ferryInput").value), sheungWan:number($("sheungWanInput").value), admiralty:number($("admiraltyInput").value), score:number($("scoreInput").value), link:$("linkInput").value.trim(), notes:$("notesInput").value.trim(), sources:old?.sources || [], createdAt:old?.createdAt || new Date().toISOString(), updatedAt:new Date().toISOString() };

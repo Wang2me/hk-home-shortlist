@@ -38,9 +38,8 @@ async function list(fid) {
 async function upsert(fid, input) {
   const p = cleanProperty(input);
   const docId = `${fid.slice(0, 12)}_${p.id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 60)}`;
-  const record = { ...p, _id: docId, familyId: fid };
-  try { await collection.doc(docId).set(record); }
-  catch { await collection.doc(docId).update(record); }
+  const record = { ...p, familyId: fid };
+  await collection.doc(docId).set(record);
   return p;
 }
 

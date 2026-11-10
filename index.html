@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f0e6">
   <meta name="description" content="家庭共同筛选香港自住房源的本地清单工具">
   <title>安居候选簿｜香港自住房源筛选</title>
-  <link rel="stylesheet" href="styles.css?v=20261110-9">
+  <link rel="stylesheet" href="styles.css?v=20261110-10">
 </head>
 <body>
   <header class="topbar">
@@ -82,7 +82,7 @@
   <footer><span>安居候选簿</span><p>资料仅供家庭比较；实际按揭以银行估价与批核为准。</p><button id="clearBtn" class="text-button danger" type="button">清空候选清单</button></footer>
 
   <dialog id="propertyDialog" class="dialog">
-    <form id="propertyForm" method="dialog">
+    <form id="propertyForm" method="dialog" novalidate>
       <div class="dialog-head"><div><p class="eyebrow">PROPERTY NOTE</p><h2 id="dialogTitle">新增房源</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
       <input id="propertyId" type="hidden">
       <div class="form-section">
@@ -91,7 +91,7 @@
           <label class="field wide"><span>房源名称 *</span><input id="nameInput" required placeholder="例：荷李活道 XX 大厦 中层"></label>
           <label class="field"><span>区域 *</span><select id="areaInput" required><option value="上环">上环</option><option value="西营盘东段/上环交界">西营盘东段/上环交界</option><option value="西半山低段">西半山低段</option><option value="西营盘">西营盘</option><option value="石塘咀">石塘咀</option><option value="其他">其他</option></select></label>
           <label class="field wide"><span>地址（用于自动计算通勤）</span><input id="addressInput" placeholder="例：香港上环荷李活道123号"></label>
-          <label class="field"><span>叫价（万港币）*</span><input id="priceInput" required type="number" min="1" step="1" placeholder="420"></label>
+          <label class="field"><span>叫价（万港币）*</span><input id="priceInput" required type="number" min="1" step="0.1" placeholder="420"></label>
           <label class="field"><span>实用面积（呎）*</span><input id="sizeInput" required type="number" min="1" step="1" placeholder="310"></label>
           <label class="field"><span>房型</span><input id="layoutInput" placeholder="例：1房 / 开放式"></label>
           <label class="field"><span>楼龄（年）</span><input id="ageInput" type="number" min="0" step="1" placeholder="38"></label>
@@ -118,6 +118,7 @@
           <label class="field wide"><span>家庭备注</span><textarea id="notesInput" rows="4" placeholder="采光、噪音、管理费、维修记录、银行估价、看房感受……"></textarea></label>
         </div>
       </div>
+      <p id="propertyFormError" class="form-error" role="alert" hidden></p>
       <div class="dialog-actions"><button id="deleteBtn" class="button danger-button" type="button" hidden>删除房源</button><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">保存房源</button></div>
     </form>
   </dialog>
@@ -164,8 +165,8 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
-  <script src="config.js?v=20261110-9"></script>
-  <script src="cloud.js?v=20261110-9"></script>
-  <script src="app.js?v=20261110-9"></script>
+  <script src="config.js?v=20261110-10"></script>
+  <script src="cloud.js?v=20261110-10"></script>
+  <script src="app.js?v=20261110-10"></script>
 </body>
 </html>
