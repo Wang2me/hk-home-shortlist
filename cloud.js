@@ -29,8 +29,18 @@
   }
 
   async function init() {
-    if (!configured() || !window.cloudbase) return { ready: false, reason: "not_configured", error: "CloudBase 网页配置不完整" };
-    if (isBlockedGitHubHost()) return { ready: false, reason: "unsupported_origin", error: "GitHub Pages 来源会被 CloudBase 拒绝。请使用 CloudBase 静态托管提供的访问地址连接家庭云。" };
+    if (!configured()) {
+      lastError = "CloudBase 网页配置不完整";
+      return { ready: false, reason: "not_configured", error: lastError };
+    }
+    if (!window.cloudbase) {
+      lastError = "CloudBase SDK 加载失败，请刷新页面后重试";
+      return { ready: false, reason: "sdk_not_loaded", error: lastError };
+    }
+    if (isBlockedGitHubHost()) {
+      lastError = "GitHub Pages 来源会被 CloudBase 拒绝。请使用 CloudBase 静态托管提供的访问地址连接家庭云。";
+      return { ready: false, reason: "unsupported_origin", error: lastError };
+    }
     try {
       app = window.cloudbase.init({ env: cfg.envId, region: cfg.region || "ap-shanghai", accessKey: cfg.publishableKey, timeout: 60000 });
       auth = app.auth();
@@ -55,7 +65,7 @@
   function forgetFamilyCode() { localStorage.removeItem(CODE_KEY); }
 
   async function signIn(username, password) {
-    if (!auth) throw new Error("CloudBase 尚未初始化");
+    if (!auth) throw new Error(lastError || "CloudBase 尚未初始化，请刷新页面后重试");
     const credentials = { username: String(username || "").trim(), password: String(password || "") };
     if (!credentials.username || !credentials.password) throw new Error("请输入家庭账号和密码");
     try {
