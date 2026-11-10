@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build-static.mjs"
+    "build": "node scripts/build-static.mjs",
+    "deploy:cloudbase": "npm run build && tcb hosting deploy ./dist / -e exuberant-tern-d6gc4fw6pfb244fe3"
   },
   "engines": {
     "node": ">=18"

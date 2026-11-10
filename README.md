@@ -65,11 +65,14 @@ https://github.com/Wang2me/hk-home-shortlist
 | 项目根目录 | `.` 或 `/` |
 | Node.js | 18 或更高 |
 | 安装命令 | 留空 |
-| 构建命令 | `npm run build` |
+| 构建命令 | 如果界面有独立构建步骤，填写 `npm run build` |
 | 构建产物目录 | `dist` |
 | 部署路径 | `/` |
+| 自定义部署命令 | `npm run deploy:cloudbase` |
 
-开启“代码更新后自动部署”。仓库已经包含构建脚本，只会把 `index.html`、CSS、前端 JavaScript 和公开配置复制到 `dist`，不会发布 README 或云函数源码。
+开启“代码更新后自动部署”。如果使用“自定义部署命令”，只填写 `npm run deploy:cloudbase`，它会先生成 `dist` 再上传，避免 `Path does not exist: dist`。不要直接填写 `tcb hosting deploy ./dist ...`，因为那会跳过构建步骤。
+
+仓库构建脚本只会把 `index.html`、CSS、前端 JavaScript 和公开配置复制到 `dist`，不会发布 README 或云函数源码。
 
 部署成功后，使用 CloudBase 提供的 `*.tcloudbaseapp.com` 默认域名访问。GitHub Pages 可以继续保留作静态备份，但由于 `github.io` 是共享域名，CloudBase 网关可能拒绝其跨域请求。
 

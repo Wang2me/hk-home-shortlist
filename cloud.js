@@ -16,10 +16,17 @@
     return cfg.envId && cfg.publishableKey && !cfg.envId.startsWith("YOUR_") && !cfg.publishableKey.startsWith("YOUR_");
   }
 
+  function isCloudBaseHost() {
+    return /(?:\.tcloudbaseapp\.com|\.tcb\.qcloud\.la)$/i.test(location.hostname) || ["localhost", "127.0.0.1"].includes(location.hostname);
+  }
+
   async function init() {
     if (!configured() || !window.cloudbase) return { ready: false, reason: "not_configured", error: "CloudBase 网页配置不完整" };
+    if (!isCloudBaseHost()) return { ready: false, reason: "unsupported_origin", error: "GitHub Pages 来源会被 CloudBase 拒绝。请使用 CloudBase 静态托管生成的 tcloudbaseapp.com 地址连接家庭云。" };
     try {
       app = window.cloudbase.init({ env: cfg.envId, region: cfg.region || "ap-shanghai", accessKey: cfg.publishableKey, timeout: 60000 });
+      const login = await app.auth().signInAnonymously();
+      if (login?.error) throw login.error;
       ready = true; lastError = "";
       return { ready: true, hasFamilyCode: Boolean(getFamilyCode()) };
     } catch (error) {
