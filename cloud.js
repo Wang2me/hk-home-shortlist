@@ -16,7 +16,8 @@
     }
     if (/EXCEED_AUTHORITY|exceeds granted authority/i.test(message)) return "当前家庭账号没有调用云函数的权限。请在 CloudBase「身份认证 → 策略管理」中把云函数调用策略关联到“注册用户”。";
     if (/failed to fetch|network|unreachable/i.test(message)) return "CloudBase 网关无法访问。网页已使用 Publishable Key 直连，请检查 home-api 是否为已部署的普通云函数，以及 Publishable Key 是否属于当前环境。";
-    if (/not found|function/i.test(message)) return `未找到普通云函数 ${cfg.functionName || "home-api"}，请确认函数名称和部署状态。`;
+    if (/FUNCTIONS_TIME_LIMIT_EXCEEDED|timed?\s*out|timeout/i.test(`${code} ${message}`)) return `${cfg.functionName || "home-api"} 执行超时。请在云函数配置中把执行超时调到 120 秒。`;
+    if (/FUNCTIONS_NOT_FOUND|function[^。,.]*not found|未找到[^。,.]*云函数/i.test(`${code} ${message}`)) return `未找到普通云函数 ${cfg.functionName || "home-api"}，请确认函数名称和部署状态。`;
     return message;
   }
 

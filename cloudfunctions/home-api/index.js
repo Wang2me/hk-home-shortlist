@@ -57,7 +57,10 @@ async function deepSeek(path, body) {
   if (!key) throw new Error("云函数尚未配置 DEEPSEEK_API_KEY");
   const response = await fetch(`https://api.deepseek.com${path}`, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const data = await response.json();
-  if (!response.ok) throw new Error(data?.error?.message || `DeepSeek 请求失败（${response.status}）`);
+  if (!response.ok) {
+    const stage = path.includes("/tools/search") ? "DeepSeek 联网搜索" : "DeepSeek 房源整理";
+    throw new Error(`${stage}失败（HTTP ${response.status}）：${data?.error?.message || "未知错误"}`);
+  }
   return data;
 }
 

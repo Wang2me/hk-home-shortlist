@@ -1,5 +1,5 @@
 {
   "envId": "exuberant-tern-d6gc4fw6pfb244fe3",
   "functionRoot": "cloudfunctions",
-  "functions": [{ "name": "home-api", "runtime": "Nodejs18.15", "timeout": 60 }]
+  "functions": [{ "name": "home-api", "runtime": "Nodejs18.15", "timeout": 120 }]
 }
