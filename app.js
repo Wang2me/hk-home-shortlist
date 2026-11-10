@@ -209,11 +209,13 @@ $("cloudForm").addEventListener("submit", async (event) => {
   } catch (error) { window.HomeCloud.forgetFamilyCode(); updateCloudBadge(); alert(`连接失败：${error.message}`); }
 });
 
-$("cloudBtn").addEventListener("click", () => {
+function openCloudDialog() {
   $("familyCodeInput").value = window.HomeCloud?.getFamilyCode() || "";
   $("disconnectCloudBtn").hidden = !window.HomeCloud?.getFamilyCode();
   $("cloudDialog").showModal();
-});
+}
+$("cloudBtn").addEventListener("click", openCloudDialog);
+$("cloudInlineBtn").addEventListener("click", openCloudDialog);
 $("disconnectCloudBtn").addEventListener("click", () => { window.HomeCloud?.forgetFamilyCode(); updateCloudBadge(); $("cloudDialog").close(); toast("已断开家庭云，本机资料仍保留"); });
 
 $("calculateCommuteBtn").addEventListener("click", async () => {
