@@ -124,10 +124,12 @@
 
   <dialog id="cloudDialog" class="dialog small-dialog">
     <form id="cloudForm" method="dialog">
-      <div class="dialog-head"><div><p class="eyebrow">FAMILY CLOUD</p><h2>连接家庭共享清单</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
-      <p class="dialog-copy">所有家庭成员输入同一个邀请码，就会看到并编辑同一份房源清单。建议使用至少12位、包含数字和字母的私密邀请码。</p>
-      <div class="form-grid"><label class="field wide"><span>家庭邀请码</span><input id="familyCodeInput" type="password" minlength="10" autocomplete="off" placeholder="由家庭创建者提供" required></label></div>
-      <div class="dialog-actions"><button id="disconnectCloudBtn" class="button danger-button" type="button">断开本机连接</button><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">连接并同步</button></div>
+      <div class="dialog-head"><div><p class="eyebrow">FAMILY CLOUD</p><h2>创建或加入家庭清单</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
+      <p class="dialog-copy">不需要在腾讯云中预先设置邀请码。第一位家庭成员直接在这里创建，其他家人输入完全相同的邀请码即可加入。</p>
+      <div class="invite-guide"><div><strong>首次创建</strong><span>自行设置一个全新的私密邀请码</span></div><div><strong>家人加入</strong><span>输入创建者发给你的同一个邀请码</span></div></div>
+      <div class="form-grid"><label class="field wide"><span>创建或输入家庭邀请码</span><input id="familyCodeInput" type="password" minlength="10" autocomplete="off" placeholder="例：WangHome-2026-X7（至少10位）" required></label></div>
+      <p class="hint">邀请码区分大小写。设置后请私下发给家人，不要公开在网页或群公告中。</p>
+      <div class="dialog-actions"><button id="disconnectCloudBtn" class="button danger-button" type="button">断开本机连接</button><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">创建或连接</button></div>
     </form>
   </dialog>
 
