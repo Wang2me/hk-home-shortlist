@@ -6,6 +6,7 @@ const defaultSettings = { downPayment: 30, annualRate: 3.5, years: 30 };
 let properties = load(STORAGE_KEY, []);
 let settings = { ...defaultSettings, ...load(SETTINGS_KEY, {}) };
 let cloudMode = false;
+let cloudError = "";
 let pendingResearch = [];
 const $ = (id) => document.getElementById(id);
 
@@ -207,6 +208,7 @@ async function initializeCloud() {
   try {
     const state = await window.HomeCloud.init();
     cloudMode = Boolean(state.ready);
+    cloudError = state.error || "";
     updateCloudBadge();
     if (cloudMode && state.hasFamilyCode) await refreshCloud(true);
   } catch (error) { console.warn("CloudBase init failed", error); cloudMode = false; updateCloudBadge(); }
@@ -214,7 +216,7 @@ async function initializeCloud() {
 
 $("cloudForm").addEventListener("submit", async (event) => {
   event.preventDefault(); if (!event.currentTarget.reportValidity()) return;
-  if (!cloudMode) return alert("网页还没有填写 CloudBase 环境 ID 和 Publishable Key，请先按 README 完成腾讯云部署配置。");
+  if (!cloudMode) return alert(cloudError || window.HomeCloud?.getLastError() || "家庭云尚未连接，请检查 CloudBase 配置。");
   const oldLocal = [...properties];
   window.HomeCloud.setFamilyCode($("familyCodeInput").value);
   try {
