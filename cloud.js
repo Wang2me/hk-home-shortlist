@@ -94,7 +94,13 @@
     try { response = await app.callFunction({ name: cfg.functionName || "home-api", data: { action, familyCode, ...payload } }); }
     catch (error) { throw new Error(friendlyError(error, "function")); }
     const result = response.result || response;
-    if (!result.ok) throw new Error(result.error || "云端操作失败");
+    if (!result.ok) {
+      const detail = String(result.error || "云端操作失败");
+      if (/RESOURCE_NOT_FOUND|reource is not found|resource is not found/i.test(detail) && ["list", "upsert", "delete", "bulk_import", "clear"].includes(action)) {
+        throw new Error("当前 CloudBase 环境尚未初始化文档数据库，或缺少 properties 集合。请在同一环境的文档数据库中创建 properties 集合。");
+      }
+      throw new Error(detail);
+    }
     return result.data;
   }
 
