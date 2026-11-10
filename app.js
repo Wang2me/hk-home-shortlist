@@ -200,7 +200,7 @@ function resetFilters() { $("searchFilter").value=""; $("areaFilter").value=""; 
 
 function updateCloudBadge() {
   $("cloudBtn").classList.toggle("connected", cloudMode && Boolean(window.HomeCloud?.getFamilyCode()));
-  $("cloudText").textContent = cloudMode ? (window.HomeCloud.getFamilyCode() ? "家庭云已同步" : "连接家庭云") : "配置家庭云";
+  $("cloudText").textContent = cloudMode ? (window.HomeCloud.getFamilyCode() ? "家庭云已同步" : "连接家庭清单") : "登录家庭账号";
 }
 
 async function initializeCloud() {
@@ -216,10 +216,13 @@ async function initializeCloud() {
 
 $("cloudForm").addEventListener("submit", async (event) => {
   event.preventDefault(); if (!event.currentTarget.reportValidity()) return;
-  if (!cloudMode) return alert(cloudError || window.HomeCloud?.getLastError() || "家庭云尚未连接，请检查 CloudBase 配置。");
   const oldLocal = [...properties];
-  window.HomeCloud.setFamilyCode($("familyCodeInput").value);
   try {
+    if (!cloudMode) {
+      await window.HomeCloud.signIn($("cloudUsernameInput").value, $("cloudPasswordInput").value);
+      cloudMode = true; cloudError = ""; updateCloudBadge();
+    }
+    window.HomeCloud.setFamilyCode($("familyCodeInput").value);
     await cloudCall("ping");
     const remote = await cloudCall("list");
     if (!remote.length && oldLocal.length && confirm(`云端清单还是空的，是否把本机的 ${oldLocal.length} 套房源上传给家人？`)) properties = await cloudCall("bulk_import", { properties:oldLocal });
@@ -229,13 +232,21 @@ $("cloudForm").addEventListener("submit", async (event) => {
 });
 
 function openCloudDialog() {
+  const loggedIn = Boolean(window.HomeCloud?.isReady());
   $("familyCodeInput").value = window.HomeCloud?.getFamilyCode() || "";
-  $("disconnectCloudBtn").hidden = !window.HomeCloud?.getFamilyCode();
+  $("accountLoginFields").hidden = loggedIn;
+  $("cloudAccountStatus").hidden = !loggedIn;
+  $("cloudUsernameInput").required = !loggedIn;
+  $("cloudPasswordInput").required = !loggedIn;
+  $("disconnectCloudBtn").hidden = !loggedIn;
   openDialogElement($("cloudDialog"));
 }
 $("cloudBtn").addEventListener("click", openCloudDialog);
 $("cloudInlineBtn").addEventListener("click", openCloudDialog);
-$("disconnectCloudBtn").addEventListener("click", () => { window.HomeCloud?.forgetFamilyCode(); updateCloudBadge(); closeDialogElement($("cloudDialog")); toast("已断开家庭云，本机资料仍保留"); });
+$("disconnectCloudBtn").addEventListener("click", async () => {
+  await window.HomeCloud?.signOut(); cloudMode = false; cloudError = "请使用家庭账号登录";
+  updateCloudBadge(); closeDialogElement($("cloudDialog")); toast("已退出家庭账号，本机资料仍保留");
+});
 
 $("calculateCommuteBtn").addEventListener("click", async () => {
   if (!cloudMode || !window.HomeCloud.getFamilyCode()) return alert("请先连接家庭共享清单，才能调用腾讯地图计算路线。");

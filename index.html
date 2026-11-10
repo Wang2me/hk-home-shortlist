@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f0e6">
   <meta name="description" content="家庭共同筛选香港自住房源的本地清单工具">
   <title>安居候选簿｜香港自住房源筛选</title>
-  <link rel="stylesheet" href="styles.css?v=20261110-3">
+  <link rel="stylesheet" href="styles.css?v=20261110-4">
 </head>
 <body>
   <header class="topbar">
@@ -124,12 +124,17 @@
 
   <dialog id="cloudDialog" class="dialog small-dialog">
     <form id="cloudForm" method="dialog">
-      <div class="dialog-head"><div><p class="eyebrow">FAMILY CLOUD</p><h2>创建或加入家庭清单</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
-      <p class="dialog-copy">不需要在腾讯云中预先设置邀请码。第一位家庭成员直接在这里创建，其他家人输入完全相同的邀请码即可加入。</p>
+      <div class="dialog-head"><div><p class="eyebrow">FAMILY CLOUD</p><h2>登录家庭清单</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
+      <p class="dialog-copy">先使用管理员在腾讯云创建的家庭账号登录，再输入全家共用的邀请码。账号用于确认成员身份，邀请码用于找到同一份清单。</p>
       <div class="invite-guide"><div><strong>首次创建</strong><span>自行设置一个全新的私密邀请码</span></div><div><strong>家人加入</strong><span>输入创建者发给你的同一个邀请码</span></div></div>
+      <div id="accountLoginFields" class="form-grid">
+        <label class="field"><span>家庭账号</span><input id="cloudUsernameInput" type="text" autocomplete="username" placeholder="例：wang-family-1"></label>
+        <label class="field"><span>账号密码</span><input id="cloudPasswordInput" type="password" autocomplete="current-password"></label>
+      </div>
+      <p id="cloudAccountStatus" class="hint" hidden>家庭账号已登录。</p>
       <div class="form-grid"><label class="field wide"><span>创建或输入家庭邀请码</span><input id="familyCodeInput" type="password" minlength="10" autocomplete="off" placeholder="例：WangHome-2026-X7（至少10位）" required></label></div>
       <p class="hint">邀请码区分大小写。设置后请私下发给家人，不要公开在网页或群公告中。</p>
-      <div class="dialog-actions"><button id="disconnectCloudBtn" class="button danger-button" type="button">断开本机连接</button><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">创建或连接</button></div>
+      <div class="dialog-actions"><button id="disconnectCloudBtn" class="button danger-button" type="button">退出家庭账号</button><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">登录并连接</button></div>
     </form>
   </dialog>
 
@@ -159,8 +164,8 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
-  <script src="config.js?v=20261110-3"></script>
-  <script src="cloud.js?v=20261110-3"></script>
-  <script src="app.js?v=20261110-3"></script>
+  <script src="config.js?v=20261110-4"></script>
+  <script src="cloud.js?v=20261110-4"></script>
+  <script src="app.js?v=20261110-4"></script>
 </body>
 </html>
