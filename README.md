@@ -19,7 +19,9 @@ GitHub Pages 负责显示网页；腾讯云 CloudBase 负责家庭数据同步�
 
 ## 第二步：部署云函数
 
-在 CloudBase 控制台新建普通云函数 `home-api`，选择 Node.js 18 或更高版本，将 `cloudfunctions/home-api` 目录中的文件上传为函数代码，并安装依赖。
+在 CloudBase 控制台新建**普通云函数（事件函数）** `home-api`，不要选择 HTTP 云函数。选择 Node.js 18 或更高版本，将 `cloudfunctions/home-api` 目录中的文件上传为函数代码，并安装依赖。
+
+如果使用 ZIP 上传，ZIP 根目录必须直接包含 `index.js` 和 `package.json`，不能在外层再套一层文件夹。项目根目录已经提供可直接上传的 `home-api.zip`（该临时部署包不会提交到 GitHub）。上传后点击“保存并安装依赖”。如果出现缺少 `scf_bootstrap`，说明误建成了 HTTP 云函数；请重新创建普通云函数。
 
 为函数添加以下环境变量：
 
