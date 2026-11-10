@@ -1,6 +1,6 @@
 # 安居候选簿：腾讯云家庭共享版
 
-GitHub Pages 负责显示网页；腾讯云 CloudBase 负责家庭数据同步、DeepSeek 联网找房和腾讯地图通勤计算。DeepSeek 与地图密钥只存放在云函数环境变量中，不会暴露给网页访客。
+腾讯云 CloudBase 静态托管负责显示网页，CloudBase 云函数与数据库负责家庭数据同步、DeepSeek 联网找房和腾讯地图通勤计算。GitHub 仓库作为源代码和自动部署来源。DeepSeek 与地图密钥只存放在云函数环境变量中，不会暴露给网页访客。
 
 ## 功能
 
@@ -49,7 +49,31 @@ window.HOME_CLOUD_CONFIG = {
 
 Publishable Key 是网页端公开凭据，可以放在 GitHub Pages；DeepSeek、腾讯地图密钥不可以。
 
-## 第四步：更新 GitHub Pages
+## 第四步：从 GitHub 自动部署到 CloudBase
+
+推荐在 CloudBase“静态网站托管”中选择“Git 仓库部署”，连接仓库：
+
+```text
+https://github.com/Wang2me/hk-home-shortlist
+```
+
+填写以下构建设置：
+
+| 设置 | 内容 |
+|---|---|
+| 分支 | `main` |
+| 项目根目录 | `.` 或 `/` |
+| Node.js | 18 或更高 |
+| 安装命令 | 留空 |
+| 构建命令 | `npm run build` |
+| 构建产物目录 | `dist` |
+| 部署路径 | `/` |
+
+开启“代码更新后自动部署”。仓库已经包含构建脚本，只会把 `index.html`、CSS、前端 JavaScript 和公开配置复制到 `dist`，不会发布 README 或云函数源码。
+
+部署成功后，使用 CloudBase 提供的 `*.tcloudbaseapp.com` 默认域名访问。GitHub Pages 可以继续保留作静态备份，但由于 `github.io` 是共享域名，CloudBase 网关可能拒绝其跨域请求。
+
+### 仅使用 GitHub Pages（备份方式）
 
 把本文件夹中的以下内容上传到 `home` 仓库根目录：
 

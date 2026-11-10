@@ -1,0 +1,12 @@
+{
+  "name": "hk-home-shortlist-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-static.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
