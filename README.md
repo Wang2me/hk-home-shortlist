@@ -13,9 +13,8 @@ GitHub Pages 负责显示网页；腾讯云 CloudBase 负责家庭数据同步�
 ## 第一步：创建 CloudBase 环境
 
 1. 登录[腾讯云 CloudBase 控制台](https://tcb.cloud.tencent.com/)，创建一个云开发环境，建议选择上海地域和文档型数据库。
-2. 在“身份认证 → 登录方式”中启用**匿名登录**。
-3. 在文档数据库中新建集合 `properties`，权限设为**仅管理员可读写**。网页不会直接访问数据库，全部操作经云函数完成。
-4. 在“API Key 配置”中创建 Web 端 **Publishable Key**。
+2. 在文档数据库中新建集合 `properties`，权限设为**仅管理员可读写**。网页不会直接访问数据库，全部操作经云函数完成。
+3. 在“API Key 配置”中创建 Web 端 **Publishable Key**。网页使用 Publishable Key 直接调用云函数，不需要匿名登录。
 
 ## 第二步：部署云函数
 
