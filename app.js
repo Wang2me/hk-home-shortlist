@@ -9,6 +9,23 @@ let cloudMode = false;
 let pendingResearch = [];
 const $ = (id) => document.getElementById(id);
 
+function openDialogElement(dialog) {
+  if (typeof dialog?.showModal === "function") dialog.showModal();
+  else if (dialog) {
+    dialog.setAttribute("open", "");
+    dialog.classList.add("fallback-open");
+    document.body.classList.add("modal-open");
+  }
+}
+
+function closeDialogElement(dialog) {
+  if (!dialog) return;
+  if (typeof dialog.close === "function") dialog.close();
+  else dialog.removeAttribute("open");
+  dialog.classList.remove("fallback-open");
+  if (!document.querySelector("dialog[open]")) document.body.classList.remove("modal-open");
+}
+
 function load(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
   catch { return fallback; }
@@ -128,7 +145,7 @@ function openProperty(id = "") {
     Object.entries(mapping).forEach(([el,key]) => $(el).value = p[key] ?? "");
     $("elevatorInput").checked = Boolean(p.elevator); $("favoriteInput").checked = Boolean(p.favorite);
   }
-  $("propertyDialog").showModal();
+  openDialogElement($("propertyDialog"));
 }
 
 $("propertyForm").addEventListener("submit", (event) => {
@@ -138,22 +155,22 @@ $("propertyForm").addEventListener("submit", (event) => {
   const old = properties.find((p) => p.id === id);
   const p = { id, name: $("nameInput").value.trim(), address:$("addressInput").value.trim(), area: $("areaInput").value, price:number($("priceInput").value), size:number($("sizeInput").value), layout:$("layoutInput").value.trim(), age:number($("ageInput").value), condition:$("conditionInput").value, type:$("typeInput").value, elevator:$("elevatorInput").checked, favorite:$("favoriteInput").checked, ferry:number($("ferryInput").value), sheungWan:number($("sheungWanInput").value), admiralty:number($("admiraltyInput").value), score:number($("scoreInput").value), link:$("linkInput").value.trim(), notes:$("notesInput").value.trim(), sources:old?.sources || [], createdAt:old?.createdAt || new Date().toISOString(), updatedAt:new Date().toISOString() };
   if (old) properties = properties.map((x) => x.id === id ? p : x); else properties.unshift(p);
-  save(); $("propertyDialog").close(); render(); toast(old ? "房源资料已更新" : "房源已加入候选簿");
+  save(); closeDialogElement($("propertyDialog")); render(); toast(old ? "房源资料已更新" : "房源已加入候选簿");
   cloudCall("upsert", { property:p }).catch((error) => toast(`云端保存失败：${error.message}`));
 });
 
 $("deleteBtn").addEventListener("click", () => {
   const id = $("propertyId").value;
-  if (id && confirm("确定删除这套房源吗？")) { properties = properties.filter((p) => p.id !== id); save(); $("propertyDialog").close(); render(); toast("房源已删除"); cloudCall("delete", { id }).catch((error) => toast(`云端删除失败：${error.message}`)); }
+  if (id && confirm("确定删除这套房源吗？")) { properties = properties.filter((p) => p.id !== id); save(); closeDialogElement($("propertyDialog")); render(); toast("房源已删除"); cloudCall("delete", { id }).catch((error) => toast(`云端删除失败：${error.message}`)); }
 });
 
 function openSettings() {
-  $("downPaymentSetting").value = settings.downPayment; $("rateSetting").value = settings.annualRate; $("yearsSetting").value = settings.years; $("settingsDialog").showModal();
+  $("downPaymentSetting").value = settings.downPayment; $("rateSetting").value = settings.annualRate; $("yearsSetting").value = settings.years; openDialogElement($("settingsDialog"));
 }
 $("settingsForm").addEventListener("submit", (event) => {
   event.preventDefault(); if (!event.currentTarget.reportValidity()) return;
   settings = { downPayment:number($("downPaymentSetting").value), annualRate:number($("rateSetting").value), years:number($("yearsSetting").value) };
-  save(); $("settingsDialog").close(); render(); toast("按揭参数已更新");
+  save(); closeDialogElement($("settingsDialog")); render(); toast("按揭参数已更新");
 });
 
 function exportData() {
@@ -205,18 +222,18 @@ $("cloudForm").addEventListener("submit", async (event) => {
     const remote = await cloudCall("list");
     if (!remote.length && oldLocal.length && confirm(`云端清单还是空的，是否把本机的 ${oldLocal.length} 套房源上传给家人？`)) properties = await cloudCall("bulk_import", { properties:oldLocal });
     else properties = remote;
-    save(); render(); updateCloudBadge(); $("cloudDialog").close(); toast("家庭共享清单已连接");
+    save(); render(); updateCloudBadge(); closeDialogElement($("cloudDialog")); toast("家庭共享清单已连接");
   } catch (error) { window.HomeCloud.forgetFamilyCode(); updateCloudBadge(); alert(`连接失败：${error.message}`); }
 });
 
 function openCloudDialog() {
   $("familyCodeInput").value = window.HomeCloud?.getFamilyCode() || "";
   $("disconnectCloudBtn").hidden = !window.HomeCloud?.getFamilyCode();
-  $("cloudDialog").showModal();
+  openDialogElement($("cloudDialog"));
 }
 $("cloudBtn").addEventListener("click", openCloudDialog);
 $("cloudInlineBtn").addEventListener("click", openCloudDialog);
-$("disconnectCloudBtn").addEventListener("click", () => { window.HomeCloud?.forgetFamilyCode(); updateCloudBadge(); $("cloudDialog").close(); toast("已断开家庭云，本机资料仍保留"); });
+$("disconnectCloudBtn").addEventListener("click", () => { window.HomeCloud?.forgetFamilyCode(); updateCloudBadge(); closeDialogElement($("cloudDialog")); toast("已断开家庭云，本机资料仍保留"); });
 
 $("calculateCommuteBtn").addEventListener("click", async () => {
   if (!cloudMode || !window.HomeCloud.getFamilyCode()) return alert("请先连接家庭共享清单，才能调用腾讯地图计算路线。");
@@ -229,7 +246,7 @@ $("calculateCommuteBtn").addEventListener("click", async () => {
 
 $("researchBtn").addEventListener("click", () => {
   if (!cloudMode || !window.HomeCloud.getFamilyCode()) return alert("请先连接家庭共享清单，再使用联网智能找房。");
-  $("researchDialog").showModal();
+  openDialogElement($("researchDialog"));
 });
 $("researchForm").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -245,7 +262,7 @@ $("researchForm").addEventListener("submit", async (event) => {
 $("importResearchBtn").addEventListener("click", async () => {
   const selected = [...document.querySelectorAll("[data-research-index]:checked")].map((el) => pendingResearch[number(el.dataset.researchIndex)]).filter(Boolean);
   if (!selected.length) return alert("请至少选择一套房源。");
-  try { properties = await cloudCall("bulk_import", { properties:selected }); save(); render(); $("researchDialog").close(); toast(`已加入并同步 ${selected.length} 套候选`); }
+  try { properties = await cloudCall("bulk_import", { properties:selected }); save(); render(); closeDialogElement($("researchDialog")); toast(`已加入并同步 ${selected.length} 套候选`); }
   catch (error) { alert(`加入失败：${error.message}`); }
 });
 
@@ -255,8 +272,8 @@ $("priceFilter").addEventListener("input", () => { $("priceOutput").textContent 
 $("addBtn").addEventListener("click", () => openProperty()); $("emptyAddBtn").addEventListener("click", () => openProperty());
 $("settingsBtn").addEventListener("click", openSettings); $("exportBtn").addEventListener("click", exportData); $("resetFiltersBtn").addEventListener("click", resetFilters);
 $("clearBtn").addEventListener("click", async () => { const scope = cloudMode && window.HomeCloud.getFamilyCode() ? "全家的云端及本机" : "这台设备上"; if (properties.length && confirm(`确定清空${scope}保存的全部候选房源吗？此操作无法撤销，建议先导出备份。`)) { if (cloudMode && window.HomeCloud.getFamilyCode()) await cloudCall("clear"); properties=[]; save(); render(); toast("候选清单已清空"); } });
-document.querySelectorAll("dialog").forEach((dialog) => dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); }));
-document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
+document.querySelectorAll("dialog").forEach((dialog) => dialog.addEventListener("click", (event) => { if (event.target === dialog) closeDialogElement(dialog); }));
+document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => closeDialogElement(button.closest("dialog"))));
 render();
 initializeCloud();
 setInterval(() => refreshCloud(true), 30000);
