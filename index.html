@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f0e6">
+  <meta name="description" content="家庭共同筛选香港自住房源的本地清单工具">
+  <title>安居候选簿｜香港自住房源筛选</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="返回顶部">
+      <span class="brand-mark">居</span>
+      <span><strong>安居候选簿</strong><small>港岛西 · 家庭共选</small></span>
+    </a>
+    <div class="header-actions">
+      <button class="button ghost" id="exportBtn" type="button">导出清单</button>
+      <label class="button ghost file-button">导入清单<input id="importInput" type="file" accept="application/json,.json"></label>
+      <button class="button primary" id="addBtn" type="button">＋ 新增房源</button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">OUR HONG KONG HOME</p>
+        <h1>把每一套心动，<br><em>变成全家看得懂的选择。</em></h1>
+        <p class="hero-copy">集中记录上环、西营盘与西半山低段的候选房源；算清首付与月供，也算清每一次跨境通勤。</p>
+      </div>
+      <div class="brief-card" aria-label="购房目标">
+        <div class="brief-title"><span>家庭购房目标</span><button id="settingsBtn" class="text-button" type="button">调整参数</button></div>
+        <div class="brief-grid">
+          <div><small>总价</small><strong>300–500万</strong><span>主力 350–430万</span></div>
+          <div><small>实用面积</small><strong>280–350呎</strong><span>自住 · 电梯房</span></div>
+          <div><small>资金安排</small><strong>首付 30%</strong><span>月供 1–1.5万</span></div>
+          <div><small>通勤中心</small><strong>上环码头</strong><span>澳门 / 深圳</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary" aria-label="清单概览">
+      <div><small>候选房源</small><strong id="countStat">0</strong><span>套</span></div>
+      <div><small>全家喜欢</small><strong id="favoriteStat">0</strong><span>套</span></div>
+      <div><small>平均叫价</small><strong id="averageStat">—</strong><span>万</span></div>
+      <div><small>最短到码头</small><strong id="commuteStat">—</strong><span>分钟</span></div>
+    </section>
+
+    <section class="workspace">
+      <aside class="filters" aria-label="筛选条件">
+        <div class="filter-heading"><h2>筛选条件</h2><button id="resetFiltersBtn" class="text-button" type="button">重置</button></div>
+        <label class="field"><span>搜索</span><input id="searchFilter" type="search" placeholder="屋苑、街道或备注"></label>
+        <label class="field"><span>区域</span><select id="areaFilter"><option value="">全部区域</option></select></label>
+        <div class="field range-field"><span>最高叫价</span><output id="priceOutput">500万</output><input id="priceFilter" type="range" min="300" max="800" value="500" step="10"></div>
+        <label class="check"><input id="favoriteFilter" type="checkbox"><span>只看喜欢的房源</span></label>
+        <label class="check"><input id="fitFilter" type="checkbox" checked><span>只看符合核心条件</span></label>
+        <label class="check"><input id="readyFilter" type="checkbox"><span>只看可直接入住</span></label>
+        <div class="criteria-note">
+          <span class="pin">核心条件</span>
+          <p>非唐楼 · 有电梯 · 300–500万 · 约280–350呎</p>
+        </div>
+      </aside>
+
+      <section class="results" aria-live="polite">
+        <div class="result-bar">
+          <div><p class="eyebrow">SHORTLIST</p><h2>候选房源 <span id="resultCount">0</span></h2></div>
+          <label class="sort-label"><span>排序</span><select id="sortSelect"><option value="updated">最近更新</option><option value="score">评分最高</option><option value="priceAsc">总价从低到高</option><option value="monthlyAsc">月供从低到高</option><option value="commuteAsc">到码头最快</option><option value="sizeDesc">面积从大到小</option></select></label>
+        </div>
+        <div id="propertyGrid" class="property-grid"></div>
+        <div id="emptyState" class="empty-state" hidden>
+          <span class="empty-icon">⌂</span>
+          <h3>还没有符合条件的房源</h3>
+          <p>新增第一套候选，或放宽左侧筛选条件。</p>
+          <button id="emptyAddBtn" class="button primary" type="button">新增房源</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer><span>安居候选簿</span><p>资料仅供家庭比较；实际按揭以银行估价与批核为准。</p><button id="clearBtn" class="text-button danger" type="button">清空本机数据</button></footer>
+
+  <dialog id="propertyDialog" class="dialog">
+    <form id="propertyForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">PROPERTY NOTE</p><h2 id="dialogTitle">新增房源</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
+      <input id="propertyId" type="hidden">
+      <div class="form-section">
+        <h3>基本资料</h3>
+        <div class="form-grid">
+          <label class="field wide"><span>房源名称 *</span><input id="nameInput" required placeholder="例：荷李活道 XX 大厦 中层"></label>
+          <label class="field"><span>区域 *</span><select id="areaInput" required><option value="上环">上环</option><option value="西营盘东段/上环交界">西营盘东段/上环交界</option><option value="西半山低段">西半山低段</option><option value="西营盘">西营盘</option><option value="石塘咀">石塘咀</option><option value="其他">其他</option></select></label>
+          <label class="field"><span>叫价（万港币）*</span><input id="priceInput" required type="number" min="1" step="1" placeholder="420"></label>
+          <label class="field"><span>实用面积（呎）*</span><input id="sizeInput" required type="number" min="1" step="1" placeholder="310"></label>
+          <label class="field"><span>房型</span><input id="layoutInput" placeholder="例：1房 / 开放式"></label>
+          <label class="field"><span>楼龄（年）</span><input id="ageInput" type="number" min="0" step="1" placeholder="38"></label>
+          <label class="field"><span>装修</span><select id="conditionInput"><option value="可直接入住">可直接入住</option><option value="新装修">新装修</option><option value="保养良好">保养良好</option><option value="需小修">需小修</option><option value="需大修">需大修</option></select></label>
+          <label class="field"><span>住宅类型</span><select id="typeInput"><option value="电梯洋楼">电梯洋楼</option><option value="私人屋苑">私人屋苑</option><option value="单幢住宅">单幢住宅</option><option value="唐楼">唐楼</option><option value="其他">其他</option></select></label>
+          <label class="check boxed"><input id="elevatorInput" type="checkbox" checked><span>大厦有电梯</span></label>
+          <label class="check boxed"><input id="favoriteInput" type="checkbox"><span>全家喜欢 ♡</span></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>跨境与市内通勤</h3>
+        <div class="form-grid thirds">
+          <label class="field"><span>到港澳码头（分钟）</span><input id="ferryInput" type="number" min="0" step="1" placeholder="8"></label>
+          <label class="field"><span>到上环站（分钟）</span><input id="sheungWanInput" type="number" min="0" step="1" placeholder="6"></label>
+          <label class="field"><span>到金钟（分钟）</span><input id="admiraltyInput" type="number" min="0" step="1" placeholder="18"></label>
+        </div>
+        <p class="hint">建议填写从家门口出发的真实时间，半山房源请计入上落坡与等车。</p>
+      </div>
+      <div class="form-section">
+        <h3>家庭判断</h3>
+        <div class="form-grid">
+          <label class="field"><span>家庭评分</span><select id="scoreInput"><option value="0">未评分</option><option value="1">1 — 不合适</option><option value="2">2 — 再看看</option><option value="3">3 — 可以考虑</option><option value="4">4 — 很喜欢</option><option value="5">5 — 首选</option></select></label>
+          <label class="field"><span>房源链接</span><input id="linkInput" type="url" placeholder="https://..."></label>
+          <label class="field wide"><span>家庭备注</span><textarea id="notesInput" rows="4" placeholder="采光、噪音、管理费、维修记录、银行估价、看房感受……"></textarea></label>
+        </div>
+      </div>
+      <div class="dialog-actions"><button id="deleteBtn" class="button danger-button" type="button" hidden>删除房源</button><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">保存房源</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="dialog small-dialog">
+    <form id="settingsForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">MORTGAGE</p><h2>按揭计算参数</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button></div>
+      <div class="form-grid">
+        <label class="field"><span>首付比例（%）</span><input id="downPaymentSetting" type="number" min="0" max="100" step="1" required></label>
+        <label class="field"><span>年利率（%）</span><input id="rateSetting" type="number" min="0" max="20" step="0.01" required></label>
+        <label class="field"><span>还款年期（年）</span><input id="yearsSetting" type="number" min="1" max="50" step="1" required></label>
+      </div>
+      <p class="hint">默认按首付 30%、贷款 70%、年利率 3.5%、30 年估算。实际金额不含印花税、代理佣金及律师费。</p>
+      <div class="dialog-actions"><span></span><span></span><button class="button ghost" type="button" data-close-dialog>取消</button><button class="button primary" type="submit">保存参数</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
