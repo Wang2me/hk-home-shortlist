@@ -6,8 +6,14 @@
   let ready = false;
   let lastError = "";
 
-  function friendlyError(error) {
-    const message = error?.message || String(error || "未知错误");
+  function friendlyError(error, stage = "general") {
+    const code = String(error?.code || error?.error?.code || error?.error_code || "");
+    const message = error?.message || error?.error?.message || String(error || "未知错误");
+    if (/RESOURCE_NOT_FOUND|\bnot_found\b/i.test(`${code} ${message}`)) {
+      if (stage === "login") return "找不到这个家庭账号。请确认账号已在当前 CloudBase 环境的「身份认证 → 用户管理」中创建，并且状态为已启用。";
+      if (stage === "function") return `当前 CloudBase 环境中找不到普通云函数 ${cfg.functionName || "home-api"}，请核对函数名称和环境 ID。`;
+      return "CloudBase 找不到所需资源，请确认网页配置、家庭账号和云函数属于同一个环境。";
+    }
     if (/EXCEED_AUTHORITY|exceeds granted authority/i.test(message)) return "当前家庭账号没有调用云函数的权限。请在 CloudBase「身份认证 → 策略管理」中把云函数调用策略关联到“注册用户”。";
     if (/failed to fetch|network|unreachable/i.test(message)) return "CloudBase 网关无法访问。网页已使用 Publishable Key 直连，请检查 home-api 是否为已部署的普通云函数，以及 Publishable Key 是否属于当前环境。";
     if (/not found|function/i.test(message)) return `未找到普通云函数 ${cfg.functionName || "home-api"}，请确认函数名称和部署状态。`;
@@ -39,7 +45,7 @@
       ready = Boolean(session); lastError = ready ? "" : "请使用家庭账号登录";
       return { ready, reason: ready ? "" : "login_required", error: lastError, hasFamilyCode: Boolean(getFamilyCode()) };
     } catch (error) {
-      ready = false; lastError = friendlyError(error);
+      ready = false; lastError = friendlyError(error, "login");
       return { ready: false, reason: "init_failed", error: lastError };
     }
   }
@@ -60,7 +66,7 @@
       ready = true; lastError = "";
       return true;
     } catch (error) {
-      ready = false; lastError = friendlyError(error);
+      ready = false; lastError = friendlyError(error, "login");
       throw new Error(lastError);
     }
   }
@@ -76,7 +82,7 @@
     if (!familyCode) throw new Error("请先输入家庭邀请码");
     let response;
     try { response = await app.callFunction({ name: cfg.functionName || "home-api", data: { action, familyCode, ...payload } }); }
-    catch (error) { throw new Error(friendlyError(error)); }
+    catch (error) { throw new Error(friendlyError(error, "function")); }
     const result = response.result || response;
     if (!result.ok) throw new Error(result.error || "云端操作失败");
     return result.data;
