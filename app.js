@@ -1,5 +1,7 @@
 const STORAGE_KEY = "hk-home-shortlist-v1";
 const SETTINGS_KEY = "hk-home-mortgage-settings-v1";
+const ROUTE_CACHE_KEY = "hk-home-route-cache-v1";
+const ROUTE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const areas = ["上环", "西营盘东段/上环交界", "西半山低段", "西营盘", "石塘咀", "其他"];
 const defaultSettings = { downPayment: 30, annualRate: 3.5, years: 30 };
 
@@ -8,6 +10,7 @@ let settings = { ...defaultSettings, ...load(SETTINGS_KEY, {}) };
 let cloudMode = false;
 let cloudError = "";
 let pendingResearch = [];
+let routeCache = load(ROUTE_CACHE_KEY, {});
 const $ = (id) => document.getElementById(id);
 
 function openDialogElement(dialog) {
@@ -148,8 +151,9 @@ function openProperty(id = "") {
   $("elevatorInput").checked = true;
   if (id) {
     const p = properties.find((x) => x.id === id); if (!p) return;
-    const mapping = { nameInput:"name", addressInput:"address", areaInput:"area", priceInput:"price", sizeInput:"size", layoutInput:"layout", ageInput:"age", conditionInput:"condition", typeInput:"type", ferryInput:"ferry", sheungWanInput:"sheungWan", admiraltyInput:"admiralty", scoreInput:"score", linkInput:"link", notesInput:"notes" };
+    const mapping = { nameInput:"name", addressInput:"address", areaInput:"area", priceInput:"price", sizeInput:"size", layoutInput:"layout", ageInput:"age", conditionInput:"condition", typeInput:"type", commuteModeInput:"commuteMode", ferryInput:"ferry", sheungWanInput:"sheungWan", admiraltyInput:"admiralty", scoreInput:"score", linkInput:"link", notesInput:"notes" };
     Object.entries(mapping).forEach(([el,key]) => $(el).value = p[key] ?? "");
+    $("commuteModeInput").value = p.commuteMode || "smart";
     $("elevatorInput").checked = Boolean(p.elevator); $("favoriteInput").checked = Boolean(p.favorite);
   }
   openDialogElement($("propertyDialog"));
@@ -175,7 +179,7 @@ $("propertyForm").addEventListener("submit", (event) => {
   $("propertyFormError").hidden = true;
   const id = $("propertyId").value || newId();
   const old = properties.find((p) => p.id === id);
-  const p = { id, name: $("nameInput").value.trim(), address:$("addressInput").value.trim(), area: $("areaInput").value, price:number($("priceInput").value), size:number($("sizeInput").value), layout:$("layoutInput").value.trim(), age:number($("ageInput").value), condition:$("conditionInput").value, type:$("typeInput").value, elevator:$("elevatorInput").checked, favorite:$("favoriteInput").checked, ferry:number($("ferryInput").value), sheungWan:number($("sheungWanInput").value), admiralty:number($("admiraltyInput").value), score:number($("scoreInput").value), link:$("linkInput").value.trim(), notes:$("notesInput").value.trim(), sources:old?.sources || [], createdAt:old?.createdAt || new Date().toISOString(), updatedAt:new Date().toISOString() };
+  const p = { id, name: $("nameInput").value.trim(), address:$("addressInput").value.trim(), area: $("areaInput").value, price:number($("priceInput").value), size:number($("sizeInput").value), layout:$("layoutInput").value.trim(), age:number($("ageInput").value), condition:$("conditionInput").value, type:$("typeInput").value, elevator:$("elevatorInput").checked, favorite:$("favoriteInput").checked, commuteMode:$("commuteModeInput").value, ferry:number($("ferryInput").value), sheungWan:number($("sheungWanInput").value), admiralty:number($("admiraltyInput").value), score:number($("scoreInput").value), link:$("linkInput").value.trim(), notes:$("notesInput").value.trim(), sources:old?.sources || [], createdAt:old?.createdAt || new Date().toISOString(), updatedAt:new Date().toISOString() };
   if (old) properties = properties.map((x) => x.id === id ? p : x); else properties.unshift(p);
   save(); closeDialogElement($("propertyDialog")); render(); toast(old ? "房源资料已更新" : "房源已加入候选簿");
   cloudCall("upsert", { property:p }).catch((error) => toast(`云端保存失败：${error.message}`));
@@ -272,10 +276,24 @@ $("disconnectCloudBtn").addEventListener("click", async () => {
 $("calculateCommuteBtn").addEventListener("click", async () => {
   if (!cloudMode || !window.HomeCloud.getFamilyCode()) return alert("请先连接家庭共享清单，才能调用腾讯地图计算路线。");
   const address = $("addressInput").value.trim(); if (!address) return alert("请先填写房源完整地址。");
+  const mode = $("commuteModeInput").value;
+  const cacheKey = `${mode}:${address.toLowerCase().replace(/\s+/g, " ")}`;
   const button = $("calculateCommuteBtn"); button.disabled = true; button.textContent = "正在计算…";
-  try { const data = await cloudCall("commute", { address }); $("ferryInput").value=data.ferry||""; $("sheungWanInput").value=data.sheungWan||""; $("admiraltyInput").value=data.admiralty||""; toast("Google Maps 路线时间已填入"); }
+  try {
+    let data = routeCache[cacheKey];
+    const fromCache = Boolean(data && Date.now() - data.cachedAt < ROUTE_CACHE_TTL);
+    if (!fromCache) {
+      data = await cloudCall("commute", { address, mode });
+      routeCache[cacheKey] = { ...data, cachedAt: Date.now() };
+      if (data.normalizedAddress) routeCache[`${mode}:${data.normalizedAddress.toLowerCase().replace(/\s+/g, " ")}`] = routeCache[cacheKey];
+      localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(routeCache));
+    }
+    $("ferryInput").value=data.ferry||""; $("sheungWanInput").value=data.sheungWan||""; $("admiraltyInput").value=data.admiralty||"";
+    if (data.normalizedAddress) $("addressInput").value = data.normalizedAddress;
+    toast(fromCache ? "已使用本机缓存的路线时间" : "腾讯地图路线时间及校准地址已填入");
+  }
   catch (error) { alert(`路线计算失败：${error.message}`); }
-  finally { button.disabled=false; button.textContent="用 Google Maps 计算"; }
+  finally { button.disabled=false; button.textContent="用腾讯地图计算"; }
 });
 
 $("researchBtn").addEventListener("click", () => {
@@ -288,7 +306,7 @@ $("researchForm").addEventListener("submit", async (event) => {
   $("runResearchBtn").disabled=true; $("researchStatus").textContent="正在搜索并核对网页，通常需要20–60秒…"; $("researchResults").innerHTML=""; $("researchImportBar").hidden=true;
   try {
     const data = await cloudCall("research", { query }); pendingResearch = data.properties || [];
-    $("researchResults").innerHTML = pendingResearch.length ? pendingResearch.map((p,i) => `<label class="research-item"><input type="checkbox" data-research-index="${i}" checked><span><h4>${escapeHtml(p.name || "未命名房源")} · ${p.price ? moneyWan(p.price) : "价格待核"}</h4><p>${escapeHtml(p.area || "区域待核")} · ${p.size ? `${p.size}呎` : "面积待核"} · ${escapeHtml(p.condition || "装修待核")}${safeUrl(p.link) ? ` · <a href="${escapeHtml(safeUrl(p.link))}" target="_blank" rel="noopener">查看来源 ↗</a>` : ""}</p></span></label>`).join("") : `<p class="empty-state">没有找到可可靠提取的在售房源，请换一种描述再试。</p>`;
+    $("researchResults").innerHTML = pendingResearch.length ? pendingResearch.map((p,i) => `<label class="research-item"><input type="checkbox" data-research-index="${i}" checked><span><h4>${escapeHtml(p.name || "未命名房源")} · ${p.price ? moneyWan(p.price) : "价格待核"}</h4><p>${escapeHtml(p.area || "区域待核")} · ${p.size ? `${p.size}呎` : "面积待核"} · ${escapeHtml(p.condition || "装修待核")}${p.address ? `<br>${escapeHtml(p.address)}` : " · 地址待核"}${safeUrl(p.link) ? ` · <a href="${escapeHtml(safeUrl(p.link))}" target="_blank" rel="noopener">查看来源 ↗</a>` : ""}</p></span></label>`).join("") : `<p class="empty-state">没有找到可可靠提取的在售房源，请换一种描述再试。</p>`;
     $("researchStatus").textContent=`找到 ${pendingResearch.length} 套候选，请先打开来源核对`; $("researchImportBar").hidden=!pendingResearch.length;
   } catch (error) { $("researchStatus").textContent=""; alert(`智能检索失败：${error.message}`); }
   finally { $("runResearchBtn").disabled=false; }

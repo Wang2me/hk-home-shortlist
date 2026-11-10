@@ -1,13 +1,13 @@
 # 安居候选簿：腾讯云家庭共享版
 
-腾讯云 CloudBase 静态托管负责显示网页，CloudBase 云函数与数据库负责家庭数据同步、DeepSeek 联网找房和 Google Maps 通勤计算。GitHub 仓库作为源代码和自动部署来源。DeepSeek 与地图密钥只存放在云函数环境变量中，不会暴露给网页访客。
+腾讯云 CloudBase 静态托管负责显示网页，CloudBase 云函数与数据库负责家庭数据同步、DeepSeek 联网找房和腾讯位置服务通勤计算。GitHub 仓库作为源代码和自动部署来源。DeepSeek 与地图密钥只存放在云函数环境变量中，不会暴露给网页访客。
 
 ## 功能
 
 - 家庭成员使用同一个私密邀请码，共享新增、编辑、评分、喜欢和备注
 - 每 30 秒自动刷新，也会在每次保存后立即写入云端
 - DeepSeek 官方 Search API 联网搜索房源，再由模型提取结构化资料
-- Google Routes API 根据地址计算到港澳码头、上环站的步行时间，以及到金钟的公共交通时间
+- 腾讯位置服务支持智能组合、步行、公交、驾车和骑行路线；相同地址与方式在浏览器缓存 7 天
 - 保留 JSON 导入、导出和浏览器本地备份
 
 ## 第一步：创建 CloudBase 环境
@@ -35,11 +35,11 @@
 |---|---|
 | `FAMILY_SALT` | 自己生成的一段至少32位随机字符，只设置一次，之后不要更改 |
 | `DEEPSEEK_API_KEY` | DeepSeek 开放平台创建的 API Key |
-| `GOOGLE_MAPS_API_KEY` | Google Cloud 中创建并限制为 Routes API 的服务端 API Key |
+| `TENCENT_MAP_KEY` | 腾讯位置服务中创建并开通 WebService API 的服务端 Key |
 
 密钥不要写入 `config.js`、GitHub 仓库或家庭邀请码中。
 
-在 Google Cloud 项目中启用结算和 **Routes API**，然后创建 API Key，并将 API 限制设为仅允许 Routes API。该 Key 由云函数服务端调用，不要设置“网站来源”限制，也不要写入前端文件。`TENCENT_MAP_KEY` 已不再使用，可以从函数环境变量中删除。
+腾讯位置服务 Key 需要开通地址解析、距离矩阵和路线规划。普通步行、驾车和骑行会通过一次矩阵请求同时计算三个目的地；智能组合额外调用一次公交路线。相同地址与方式会在当前浏览器缓存 7 天，以减少重复调用。Key 只放在云函数环境变量中，不要写入前端文件。
 
 ## 第三步：连接网页
 
@@ -54,7 +54,7 @@ window.HOME_CLOUD_CONFIG = {
 };
 ```
 
-Publishable Key 是网页端公开凭据，可以放在 GitHub Pages；DeepSeek、Google Maps 密钥不可以。
+Publishable Key 是网页端公开凭据，可以放在 GitHub Pages；DeepSeek、腾讯地图密钥不可以。
 
 ## 第四步：从 GitHub 自动部署到 CloudBase
 
